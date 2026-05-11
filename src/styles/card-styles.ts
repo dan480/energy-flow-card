@@ -280,7 +280,7 @@ export const cardStyles = css`
   .interpanel svg {
     position: relative;
     width: 100%;
-    height: 130px;
+    height: 96px;
   }
 
   .inter-edge {

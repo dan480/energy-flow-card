@@ -193,7 +193,7 @@ export class HousePowerFlowCard extends LitElement {
     const panelNodeIds = new Set(nodes.filter((node) => node.panel_id && Number.isFinite(node.panel_slot)).map((node) => node.id));
     const freeNodes = nodes.filter((node) => !panelNodeIds.has(node.id));
 
-    const graphHeight = Math.min(760, Math.max(340, layout.height + 20));
+    const graphHeight = Math.min(520, Math.max(280, layout.height));
 
     // Only draw graph lines for nodes that are outside panels to avoid "floating" lines.
     const edges = nodes

@@ -972,7 +972,7 @@ var cardStyles = i`
   .interpanel svg {
     position: relative;
     width: 100%;
-    height: 130px;
+    height: 96px;
   }
 
   .inter-edge {
@@ -1396,7 +1396,7 @@ var HousePowerFlowCard = class extends i4 {
     const layout = layoutTree(nodes, rootIds, buildChildrenMap(nodes));
     const panelNodeIds = new Set(nodes.filter((node) => node.panel_id && Number.isFinite(node.panel_slot)).map((node) => node.id));
     const freeNodes = nodes.filter((node) => !panelNodeIds.has(node.id));
-    const graphHeight = Math.min(760, Math.max(340, layout.height + 20));
+    const graphHeight = Math.min(520, Math.max(280, layout.height));
     const edges = nodes.filter((node) => node.parent && nodeMap.has(node.parent) && !panelNodeIds.has(node.id) && !panelNodeIds.has(node.parent)).map((node) => {
       const parentPosition = node.parent ? layout.positions.get(node.parent) : void 0;
       const childPosition = layout.positions.get(node.id);

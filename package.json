@@ -6,7 +6,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-user/house-power-flow-card.git"
+    "url": "https://github.com/dan480/energy-flow-card.git"
   },
   "keywords": [
     "home-assistant",
@@ -16,10 +16,10 @@
     "power-flow"
   ],
   "scripts": {
-    "build": "esbuild src/index.ts --bundle --format=esm --target=es2020 --outfile=dist/house-power-flow-card.js",
-    "dev": "esbuild src/index.ts --bundle --format=esm --target=es2020 --outfile=dist/house-power-flow-card.js --watch",
+    "build": "esbuild src/index.ts --bundle --format=esm --target=es2020 --outfile=house-power-flow-card.js",
+    "dev": "esbuild src/index.ts --bundle --format=esm --target=es2020 --outfile=house-power-flow-card.js --watch",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist house-power-flow-card.js"
   },
   "devDependencies": {
     "esbuild": "^0.25.5",

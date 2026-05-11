@@ -16,12 +16,13 @@
     "power-flow"
   ],
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
+    "build": "esbuild src/index.ts --bundle --format=esm --target=es2020 --outfile=dist/house-power-flow-card.js",
+    "dev": "esbuild src/index.ts --bundle --format=esm --target=es2020 --outfile=dist/house-power-flow-card.js --watch",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
   "devDependencies": {
+    "esbuild": "^0.25.5",
     "tsup": "^8.3.5",
     "typescript": "^5.7.2"
   },

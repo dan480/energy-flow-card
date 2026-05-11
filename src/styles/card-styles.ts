@@ -19,10 +19,6 @@ export const cardStyles = css`
       linear-gradient(180deg, rgba(12, 16, 24, 0.04), rgba(12, 16, 24, 0.01));
   }
 
-  .wrapper.fullscreen {
-    min-height: calc(100vh - 120px);
-  }
-
   .hero {
     display: flex;
     justify-content: space-between;
@@ -284,7 +280,7 @@ export const cardStyles = css`
   .interpanel svg {
     position: relative;
     width: 100%;
-    height: 220px;
+    height: 130px;
   }
 
   .inter-edge {

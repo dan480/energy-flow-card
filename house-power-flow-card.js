@@ -711,10 +711,6 @@ var cardStyles = i`
       linear-gradient(180deg, rgba(12, 16, 24, 0.04), rgba(12, 16, 24, 0.01));
   }
 
-  .wrapper.fullscreen {
-    min-height: calc(100vh - 120px);
-  }
-
   .hero {
     display: flex;
     justify-content: space-between;
@@ -976,7 +972,7 @@ var cardStyles = i`
   .interpanel svg {
     position: relative;
     width: 100%;
-    height: 220px;
+    height: 130px;
   }
 
   .inter-edge {
@@ -1400,8 +1396,7 @@ var HousePowerFlowCard = class extends i4 {
     const layout = layoutTree(nodes, rootIds, buildChildrenMap(nodes));
     const panelNodeIds = new Set(nodes.filter((node) => node.panel_id && Number.isFinite(node.panel_slot)).map((node) => node.id));
     const freeNodes = nodes.filter((node) => !panelNodeIds.has(node.id));
-    const viewportHeight = typeof window !== "undefined" ? window.innerHeight : 1e3;
-    const graphHeight = Math.max(layout.height, Math.round(viewportHeight * 0.58));
+    const graphHeight = Math.min(760, Math.max(340, layout.height + 20));
     const edges = nodes.filter((node) => node.parent && nodeMap.has(node.parent) && !panelNodeIds.has(node.id) && !panelNodeIds.has(node.parent)).map((node) => {
       const parentPosition = node.parent ? layout.positions.get(node.parent) : void 0;
       const childPosition = layout.positions.get(node.id);
@@ -1409,7 +1404,12 @@ var HousePowerFlowCard = class extends i4 {
       const flow = getEdgeFlow(node, this.config.min_active_power);
       const classes = ["edge", flow.active ? "active" : "", flow.reverse ? "reverse" : "", `phase-${this.phaseClass(node.phase)}`].filter(Boolean).join(" ");
       const pathId = `edge-${node.id}`;
-      const d3 = `M ${parentPosition.x + 92} ${parentPosition.y} C ${parentPosition.x + 165} ${parentPosition.y}, ${childPosition.x - 165} ${childPosition.y}, ${childPosition.x - 92} ${childPosition.y}`;
+      const x1 = parentPosition.x + 92;
+      const y1 = parentPosition.y;
+      const x2 = childPosition.x - 92;
+      const y22 = childPosition.y;
+      const midX = (x1 + x2) / 2;
+      const d3 = `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y22} L ${x2} ${y22}`;
       return w`
           <path id=${pathId} class=${classes} style=${`stroke-width:${this.config.line_width}`} d=${d3} marker-end="url(#arrow)" />
           ${flow.active ? w`
@@ -1444,7 +1444,7 @@ var HousePowerFlowCard = class extends i4 {
     const panelCanvasHeight = Math.max(220, this.config.panels.length * 90);
     return b2`
       <ha-card>
-        <div class="wrapper fullscreen">
+        <div class="wrapper">
           <div class="hero">
             <div>
               <div class="title">${this.config.title}</div>

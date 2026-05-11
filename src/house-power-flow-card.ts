@@ -193,8 +193,7 @@ export class HousePowerFlowCard extends LitElement {
     const panelNodeIds = new Set(nodes.filter((node) => node.panel_id && Number.isFinite(node.panel_slot)).map((node) => node.id));
     const freeNodes = nodes.filter((node) => !panelNodeIds.has(node.id));
 
-    const viewportHeight = typeof window !== "undefined" ? window.innerHeight : 1000;
-    const graphHeight = Math.max(layout.height, Math.round(viewportHeight * 0.58));
+    const graphHeight = Math.min(760, Math.max(340, layout.height + 20));
 
     // Only draw graph lines for nodes that are outside panels to avoid "floating" lines.
     const edges = nodes
@@ -210,7 +209,12 @@ export class HousePowerFlowCard extends LitElement {
           .join(" ");
 
         const pathId = `edge-${node.id}`;
-        const d = `M ${parentPosition.x + 92} ${parentPosition.y} C ${parentPosition.x + 165} ${parentPosition.y}, ${childPosition.x - 165} ${childPosition.y}, ${childPosition.x - 92} ${childPosition.y}`;
+        const x1 = parentPosition.x + 92;
+        const y1 = parentPosition.y;
+        const x2 = childPosition.x - 92;
+        const y2 = childPosition.y;
+        const midX = (x1 + x2) / 2;
+        const d = `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y2} L ${x2} ${y2}`;
 
         return svg`
           <path id=${pathId} class=${classes} style=${`stroke-width:${this.config!.line_width}`} d=${d} marker-end="url(#arrow)" />
@@ -261,7 +265,7 @@ export class HousePowerFlowCard extends LitElement {
 
     return html`
       <ha-card>
-        <div class="wrapper fullscreen">
+        <div class="wrapper">
           <div class="hero">
             <div>
               <div class="title">${this.config.title}</div>

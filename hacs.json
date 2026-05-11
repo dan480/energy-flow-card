@@ -1,6 +1,6 @@
 {
   "name": "House Power Flow Card",
-  "filename": "house-power-flow-card.js",
+  "filename": "dist/house-power-flow-card.js",
   "content_in_root": false,
   "render_readme": true,
   "country": ["*"],

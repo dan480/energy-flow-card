@@ -695,15 +695,24 @@ function getEdgeFlow(node, minActivePower) {
 var cardStyles = i`
   :host {
     display: block;
+    width: 100%;
+  }
+
+  ha-card {
+    width: 100%;
   }
 
   .wrapper {
     padding: 14px;
+    border-radius: 14px;
     background:
       radial-gradient(circle at 8% 0%, rgba(56, 189, 248, 0.18), transparent 35%),
       radial-gradient(circle at 90% 0%, rgba(16, 185, 129, 0.16), transparent 35%),
       linear-gradient(180deg, rgba(12, 16, 24, 0.04), rgba(12, 16, 24, 0.01));
-    border-radius: 14px;
+  }
+
+  .wrapper.fullscreen {
+    min-height: calc(100vh - 120px);
   }
 
   .hero {
@@ -716,9 +725,8 @@ var cardStyles = i`
   }
 
   .title {
-    font-size: 21px;
+    font-size: 22px;
     font-weight: 800;
-    letter-spacing: 0.01em;
     margin-bottom: 4px;
   }
 
@@ -742,18 +750,14 @@ var cardStyles = i`
     cursor: pointer;
   }
 
-  .edit-btn:hover {
-    background: rgba(14, 165, 233, 0.2);
-  }
-
   .kpis {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
     gap: 8px;
-    flex-wrap: wrap;
+    min-width: min(980px, 100%);
   }
 
   .kpi {
-    min-width: 108px;
     border-radius: 10px;
     padding: 8px 10px;
     background: rgba(255, 255, 255, 0.75);
@@ -794,22 +798,21 @@ var cardStyles = i`
     border-radius: 999px;
     font-size: 11px;
     font-weight: 700;
-    border: 1px solid transparent;
   }
 
   .phase-chip.l1 {
     background: rgba(239, 68, 68, 0.12);
-    border-color: rgba(239, 68, 68, 0.35);
+    border: 1px solid rgba(239, 68, 68, 0.35);
   }
 
   .phase-chip.l2 {
     background: rgba(59, 130, 246, 0.12);
-    border-color: rgba(59, 130, 246, 0.35);
+    border: 1px solid rgba(59, 130, 246, 0.35);
   }
 
   .phase-chip.l3 {
     background: rgba(16, 185, 129, 0.12);
-    border-color: rgba(16, 185, 129, 0.35);
+    border: 1px solid rgba(16, 185, 129, 0.35);
   }
 
   .graph {
@@ -846,7 +849,6 @@ var cardStyles = i`
   }
 
   .edge.active {
-    stroke: #22c55e;
     stroke-dasharray: 11 8;
     animation: flow 1s linear infinite;
     filter: drop-shadow(0 0 5px rgba(34, 197, 94, 0.65));
@@ -862,18 +864,21 @@ var cardStyles = i`
   }
 
   .edge.phase-l1,
-  .panel-edge.phase-l1 {
-    stroke: rgba(239, 68, 68, 0.6);
+  .panel-edge.phase-l1,
+  .inter-edge.phase-l1 {
+    stroke: rgba(239, 68, 68, 0.75);
   }
 
   .edge.phase-l2,
-  .panel-edge.phase-l2 {
-    stroke: rgba(59, 130, 246, 0.6);
+  .panel-edge.phase-l2,
+  .inter-edge.phase-l2 {
+    stroke: rgba(59, 130, 246, 0.75);
   }
 
   .edge.phase-l3,
-  .panel-edge.phase-l3 {
-    stroke: rgba(16, 185, 129, 0.6);
+  .panel-edge.phase-l3,
+  .inter-edge.phase-l3 {
+    stroke: rgba(16, 185, 129, 0.75);
   }
 
   .flow-dot {
@@ -894,13 +899,12 @@ var cardStyles = i`
   .node {
     position: absolute;
     transform: translate(-50%, -50%);
-    width: 186px;
+    width: 200px;
     min-height: 74px;
     padding: 9px 10px;
     border-radius: 12px;
-    backdrop-filter: blur(3px);
     border: 1px solid rgba(120, 130, 150, 0.4);
-    background: rgba(255, 255, 255, 0.87);
+    background: rgba(255, 255, 255, 0.9);
     box-shadow: 0 8px 16px rgba(15, 23, 42, 0.12);
     z-index: 2;
   }
@@ -955,34 +959,56 @@ var cardStyles = i`
     box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
   }
 
-  .node.off,
-  .panel-slot.off {
-    opacity: 0.75;
+  .interpanel {
+    border: 1px solid rgba(120, 130, 150, 0.28);
+    border-radius: 12px;
+    background: rgba(248, 250, 252, 0.88);
+    margin-bottom: 12px;
+    padding: 8px;
   }
 
-  .node.alert,
-  .panel-slot.alert {
-    border-color: rgba(239, 68, 68, 0.6);
-    box-shadow: 0 8px 16px rgba(239, 68, 68, 0.24);
+  .interpanel-title {
+    font-size: 12px;
+    font-weight: 800;
+    margin-bottom: 6px;
+  }
+
+  .interpanel svg {
+    position: relative;
+    width: 100%;
+    height: 220px;
+  }
+
+  .inter-edge {
+    fill: none;
+    stroke-width: 2.4;
+    stroke-dasharray: 7 5;
+  }
+
+  .inter-label {
+    font-size: 11px;
+    fill: rgba(30, 41, 59, 0.85);
+    font-weight: 700;
+    text-anchor: middle;
   }
 
   .panels {
     display: grid;
     gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
   }
 
   .panel {
     border: 1px solid rgba(120, 130, 150, 0.28);
     border-radius: 14px;
     padding: 10px;
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.9), rgba(244, 248, 255, 0.86)), radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.08), transparent 45%);
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.9), rgba(244, 248, 255, 0.86));
     box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
   }
 
   .panel-top {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
     gap: 10px;
     margin-bottom: 8px;
   }
@@ -1007,7 +1033,6 @@ var cardStyles = i`
 
   .usage-fill {
     height: 100%;
-    border-radius: inherit;
     background: linear-gradient(90deg, #22c55e, #0ea5e9);
   }
 
@@ -1027,13 +1052,17 @@ var cardStyles = i`
   .panel-edge {
     fill: none;
     stroke-width: 2.2;
-    stroke: rgba(100, 116, 139, 0.5);
     stroke-dasharray: 6 5;
   }
 
   .panel-edge.active {
     stroke-width: 2.8;
     filter: drop-shadow(0 0 3px rgba(14, 165, 233, 0.7));
+  }
+
+  .terminal-dot {
+    fill: #334155;
+    opacity: 0.9;
   }
 
   .panel-grid {
@@ -1048,16 +1077,11 @@ var cardStyles = i`
     border-radius: 9px;
     padding: 8px;
     min-height: 82px;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.92);
   }
 
   .panel-slot.draggable {
     cursor: grab;
-  }
-
-  .panel-slot.dropzone:hover {
-    border-color: rgba(14, 165, 233, 0.55);
-    background: rgba(14, 165, 233, 0.08);
   }
 
   .panel-slot.empty {
@@ -1155,14 +1179,21 @@ var cardStyles = i`
     }
   }
 
+  @media (max-width: 1020px) {
+    .panels {
+      grid-template-columns: 1fr;
+    }
+  }
+
   @media (max-width: 740px) {
     .node {
       width: 156px;
       min-height: 68px;
     }
 
-    .kpi {
-      min-width: 92px;
+    .kpis {
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      min-width: 100%;
     }
   }
 `;
@@ -1259,7 +1290,7 @@ var HousePowerFlowCard = class extends i4 {
     };
   }
   getCardSize() {
-    return 9;
+    return 12;
   }
   phaseClass(phase) {
     return phase.toLowerCase();
@@ -1367,41 +1398,28 @@ var HousePowerFlowCard = class extends i4 {
     const nodeMap = new Map(nodes.map((node) => [node.id, node]));
     const rootIds = findRootIds(nodes, this.config.root_id).filter((id) => nodeMap.has(id));
     const layout = layoutTree(nodes, rootIds, buildChildrenMap(nodes));
-    const edges = nodes.filter((node) => node.parent && nodeMap.has(node.parent)).map((node) => {
+    const panelNodeIds = new Set(nodes.filter((node) => node.panel_id && Number.isFinite(node.panel_slot)).map((node) => node.id));
+    const freeNodes = nodes.filter((node) => !panelNodeIds.has(node.id));
+    const viewportHeight = typeof window !== "undefined" ? window.innerHeight : 1e3;
+    const graphHeight = Math.max(layout.height, Math.round(viewportHeight * 0.58));
+    const edges = nodes.filter((node) => node.parent && nodeMap.has(node.parent) && !panelNodeIds.has(node.id) && !panelNodeIds.has(node.parent)).map((node) => {
       const parentPosition = node.parent ? layout.positions.get(node.parent) : void 0;
       const childPosition = layout.positions.get(node.id);
       if (!parentPosition || !childPosition) return null;
       const flow = getEdgeFlow(node, this.config.min_active_power);
-      const classes = [
-        "edge",
-        flow.active ? "active" : "",
-        flow.reverse ? "reverse" : "",
-        flow.bidirectional ? "bidirectional" : "",
-        `phase-${this.phaseClass(node.phase)}`
-      ].filter(Boolean).join(" ");
+      const classes = ["edge", flow.active ? "active" : "", flow.reverse ? "reverse" : "", `phase-${this.phaseClass(node.phase)}`].filter(Boolean).join(" ");
       const pathId = `edge-${node.id}`;
-      const d3 = `M ${parentPosition.x + 90} ${parentPosition.y} C ${parentPosition.x + 140} ${parentPosition.y}, ${childPosition.x - 140} ${childPosition.y}, ${childPosition.x - 90} ${childPosition.y}`;
+      const d3 = `M ${parentPosition.x + 92} ${parentPosition.y} C ${parentPosition.x + 165} ${parentPosition.y}, ${childPosition.x - 165} ${childPosition.y}, ${childPosition.x - 92} ${childPosition.y}`;
       return w`
           <path id=${pathId} class=${classes} style=${`stroke-width:${this.config.line_width}`} d=${d3} marker-end="url(#arrow)" />
           ${flow.active ? w`
                 <circle class="flow-dot" r="4">
-                  <animateMotion dur=${`${flow.speedSeconds}s`} repeatCount="indefinite" rotate="auto">
-                    <mpath href=${`#${pathId}`}></mpath>
-                  </animateMotion>
+                  <animateMotion dur=${`${flow.speedSeconds}s`} repeatCount="indefinite" rotate="auto"><mpath href=${`#${pathId}`}></mpath></animateMotion>
                 </circle>
-                ${flow.bidirectional ? w`
-                      <circle class="flow-dot reverse" r="4">
-                        <animateMotion dur=${`${flow.speedSeconds}s`} repeatCount="indefinite" rotate="auto-reverse">
-                          <mpath href=${`#${pathId}`}></mpath>
-                        </animateMotion>
-                      </circle>
-                    ` : w``}
               ` : w``}
           <text class="phase-label" x=${(parentPosition.x + childPosition.x) / 2} y=${(parentPosition.y + childPosition.y) / 2 - 8}>${node.phase}</text>
         `;
     });
-    const panelNodeIds = new Set(nodes.filter((node) => node.panel_id && Number.isFinite(node.panel_slot)).map((node) => node.id));
-    const freeNodes = nodes.filter((node) => !panelNodeIds.has(node.id));
     const totalPower = nodes.reduce((sum, node) => sum + (node.computed.power && node.computed.power > 0 ? node.computed.power : 0), 0);
     const pvGeneration = nodes.filter((n5) => n5.type === "solar").reduce((sum, n5) => sum + Math.max(0, n5.computed.power ?? 0), 0);
     const batteryPowerNet = nodes.filter((n5) => n5.type === "battery").reduce((sum, n5) => sum + (n5.computed.power ?? 0), 0);
@@ -1420,9 +1438,13 @@ var HousePowerFlowCard = class extends i4 {
     const avg = (phaseTotals.L1 + phaseTotals.L2 + phaseTotals.L3) / activePhases;
     const maxDev = Math.max(Math.abs(phaseTotals.L1 - avg), Math.abs(phaseTotals.L2 - avg), Math.abs(phaseTotals.L3 - avg));
     const phaseImbalancePct = avg > 0 ? maxDev / avg * 100 : 0;
+    const interPanelConnections = nodes.filter((node) => node.parent).map((node) => ({ child: node, parent: node.parent ? nodeMap.get(node.parent) : void 0 })).filter((entry) => Boolean(entry.parent)).filter(({ child, parent }) => Boolean(child.panel_id && parent.panel_id && child.panel_id !== parent.panel_id));
+    const panelOrder = new Map(this.config.panels.map((panel, idx) => [panel.id, idx]));
+    const panelCanvasWidth = 1200;
+    const panelCanvasHeight = Math.max(220, this.config.panels.length * 90);
     return b2`
       <ha-card>
-        <div class="wrapper">
+        <div class="wrapper fullscreen">
           <div class="hero">
             <div>
               <div class="title">${this.config.title}</div>
@@ -1451,9 +1473,9 @@ var HousePowerFlowCard = class extends i4 {
             <span class="phase-chip l3">L3 ${phaseTotals.L3.toFixed(0)} W</span>
           </div>
 
-          <div class="graph" style=${`height:${layout.height}px`}>
+          <div class="graph" style=${`height:${graphHeight}px`}>
             <div class="graph-glow"></div>
-            <svg viewBox=${`0 0 ${layout.width} ${layout.height}`} preserveAspectRatio="none">
+            <svg viewBox=${`0 0 ${layout.width} ${graphHeight}`} preserveAspectRatio="none">
               <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--primary-text-color)" opacity="0.75" /></marker></defs>
               ${edges}
             </svg>
@@ -1473,6 +1495,34 @@ var HousePowerFlowCard = class extends i4 {
               `;
     })}
           </div>
+
+          ${interPanelConnections.length ? b2`
+                <div class="interpanel">
+                  <div class="interpanel-title">Inter-Panel Routing</div>
+                  <svg viewBox=${`0 0 ${panelCanvasWidth} ${panelCanvasHeight}`} preserveAspectRatio="none">
+                    ${interPanelConnections.map(({ child, parent }) => {
+      const fromIndex = panelOrder.get(parent.panel_id ?? "") ?? 0;
+      const toIndex = panelOrder.get(child.panel_id ?? "") ?? 0;
+      const panelCount = Math.max(1, this.config.panels.length);
+      const laneW = panelCanvasWidth / panelCount;
+      const x1 = fromIndex * laneW + laneW / 2;
+      const x2 = toIndex * laneW + laneW / 2;
+      const y1 = 36 + (parent.panel_slot ?? 1) % 8 * 22;
+      const y22 = 36 + (child.panel_slot ?? 1) % 8 * 22;
+      const midX = (x1 + x2) / 2;
+      const d3 = `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y22} L ${x2} ${y22}`;
+      const pid = `inter-${parent.id}-${child.id}`;
+      const flow = getEdgeFlow(child, this.config.min_active_power);
+      return w`
+                        <path id=${pid} class=${`inter-edge phase-${this.phaseClass(child.phase)}`} d=${d3}></path>
+                        <text class="inter-label" x=${x1} y=${18}>${parent.panel_id}</text>
+                        <text class="inter-label" x=${x2} y=${18}>${child.panel_id}</text>
+                        ${flow.active ? w`<circle class="flow-dot panel" r="3"><animateMotion dur=${`${flow.speedSeconds}s`} repeatCount="indefinite" rotate="auto"><mpath href=${`#${pid}`}></mpath></animateMotion></circle>` : w``}
+                      `;
+    })}
+                  </svg>
+                </div>
+              ` : b2``}
 
           ${this.config.panels.length ? b2`
                 <div class="panels">
@@ -1503,14 +1553,17 @@ var HousePowerFlowCard = class extends i4 {
         const pRow = Math.floor((parentSlot - 1) / col);
         const cCol = (childSlot - 1) % col;
         const cRow = Math.floor((childSlot - 1) / col);
-        const x1 = pCol * cellW + cellW / 2;
+        const x1 = pCol * cellW + cellW * 0.86;
         const y1 = pRow * cellH + cellH / 2;
-        const x2 = cCol * cellW + cellW / 2;
+        const x2 = cCol * cellW + cellW * 0.14;
         const y22 = cRow * cellH + cellH / 2;
-        const d3 = `M ${x1} ${y1} C ${(x1 + x2) / 2} ${y1}, ${(x1 + x2) / 2} ${y22}, ${x2} ${y22}`;
+        const midX = (x1 + x2) / 2;
+        const d3 = `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y22} L ${x2} ${y22}`;
         const pid = `panel-edge-${panel.id}-${node.id}`;
         return w`
                                 <path id=${pid} class=${`panel-edge ${flow.active ? "active" : ""} phase-${this.phaseClass(node.phase)}`} d=${d3}></path>
+                                <circle cx=${x1} cy=${y1} r="2" class="terminal-dot"></circle>
+                                <circle cx=${x2} cy=${y22} r="2" class="terminal-dot"></circle>
                                 ${flow.active ? w`
                                       <circle class="flow-dot panel" r="3"><animateMotion dur=${`${flow.speedSeconds}s`} repeatCount="indefinite" rotate="auto"><mpath href=${`#${pid}`}></mpath></animateMotion></circle>
                                       ${flow.bidirectional ? w`<circle class="flow-dot panel reverse" r="3"><animateMotion dur=${`${flow.speedSeconds}s`} repeatCount="indefinite" rotate="auto-reverse"><mpath href=${`#${pid}`}></mpath></animateMotion></circle>` : w``}
@@ -1519,12 +1572,12 @@ var HousePowerFlowCard = class extends i4 {
       })}
                           </svg>
 
-                          <div class="panel-grid" style=${`grid-template-columns: repeat(${columns}, minmax(120px, 1fr));`}>
+                          <div class="panel-grid" style=${`grid-template-columns: repeat(${columns}, minmax(140px, 1fr));`}>
                             ${Array.from({ length: slotCount }, (_2, index) => {
         const slot = index + 1;
         const slotNode = slotNodeMap.get(slot);
         if (!slotNode) {
-          return b2`<div class="panel-slot empty dropzone" @dragover=${this.onDragOver} @drop=${() => this.onDrop(panel.id, slot)}><div class="slot-label">Slot ${slot}</div><div class="slot-empty">пусто</div></div>`;
+          return b2`<div class="panel-slot empty dropzone" @dragover=${this.onDragOver} @drop=${() => this.onDrop(panel.id, slot)}><div class="slot-label">Slot ${slot}</div><div class="slot-empty">empty</div></div>`;
         }
         const metrics = this.formatMetrics(slotNode);
         const statusClass = this.nodeStateClass(slotNode);

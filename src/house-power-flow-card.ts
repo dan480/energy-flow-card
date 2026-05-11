@@ -58,7 +58,7 @@ export class HousePowerFlowCard extends LitElement {
   }
 
   public getCardSize(): number {
-    return 9;
+    return 12;
   }
 
   private phaseClass(phase: Phase): string {
@@ -190,70 +190,51 @@ export class HousePowerFlowCard extends LitElement {
     const rootIds = findRootIds(nodes, this.config.root_id).filter((id) => nodeMap.has(id));
     const layout = layoutTree(nodes, rootIds, buildChildrenMap(nodes));
 
+    const panelNodeIds = new Set(nodes.filter((node) => node.panel_id && Number.isFinite(node.panel_slot)).map((node) => node.id));
+    const freeNodes = nodes.filter((node) => !panelNodeIds.has(node.id));
+
+    const viewportHeight = typeof window !== "undefined" ? window.innerHeight : 1000;
+    const graphHeight = Math.max(layout.height, Math.round(viewportHeight * 0.58));
+
+    // Only draw graph lines for nodes that are outside panels to avoid "floating" lines.
     const edges = nodes
-      .filter((node) => node.parent && nodeMap.has(node.parent))
+      .filter((node) => node.parent && nodeMap.has(node.parent) && !panelNodeIds.has(node.id) && !panelNodeIds.has(node.parent))
       .map((node) => {
         const parentPosition = node.parent ? layout.positions.get(node.parent) : undefined;
         const childPosition = layout.positions.get(node.id);
         if (!parentPosition || !childPosition) return null;
 
         const flow = getEdgeFlow(node, this.config!.min_active_power);
-        const classes = [
-          "edge",
-          flow.active ? "active" : "",
-          flow.reverse ? "reverse" : "",
-          flow.bidirectional ? "bidirectional" : "",
-          `phase-${this.phaseClass(node.phase)}`,
-        ]
+        const classes = ["edge", flow.active ? "active" : "", flow.reverse ? "reverse" : "", `phase-${this.phaseClass(node.phase)}`]
           .filter(Boolean)
           .join(" ");
 
         const pathId = `edge-${node.id}`;
-        const d = `M ${parentPosition.x + 90} ${parentPosition.y} C ${parentPosition.x + 140} ${parentPosition.y}, ${childPosition.x - 140} ${childPosition.y}, ${childPosition.x - 90} ${childPosition.y}`;
+        const d = `M ${parentPosition.x + 92} ${parentPosition.y} C ${parentPosition.x + 165} ${parentPosition.y}, ${childPosition.x - 165} ${childPosition.y}, ${childPosition.x - 92} ${childPosition.y}`;
 
         return svg`
           <path id=${pathId} class=${classes} style=${`stroke-width:${this.config!.line_width}`} d=${d} marker-end="url(#arrow)" />
           ${flow.active
             ? svg`
                 <circle class="flow-dot" r="4">
-                  <animateMotion dur=${`${flow.speedSeconds}s`} repeatCount="indefinite" rotate="auto">
-                    <mpath href=${`#${pathId}`}></mpath>
-                  </animateMotion>
+                  <animateMotion dur=${`${flow.speedSeconds}s`} repeatCount="indefinite" rotate="auto"><mpath href=${`#${pathId}`}></mpath></animateMotion>
                 </circle>
-                ${flow.bidirectional
-                  ? svg`
-                      <circle class="flow-dot reverse" r="4">
-                        <animateMotion dur=${`${flow.speedSeconds}s`} repeatCount="indefinite" rotate="auto-reverse">
-                          <mpath href=${`#${pathId}`}></mpath>
-                        </animateMotion>
-                      </circle>
-                    `
-                  : svg``}
               `
             : svg``}
           <text class="phase-label" x=${(parentPosition.x + childPosition.x) / 2} y=${(parentPosition.y + childPosition.y) / 2 - 8}>${node.phase}</text>
         `;
       });
 
-    const panelNodeIds = new Set(nodes.filter((node) => node.panel_id && Number.isFinite(node.panel_slot)).map((node) => node.id));
-    const freeNodes = nodes.filter((node) => !panelNodeIds.has(node.id));
-
     const totalPower = nodes.reduce((sum, node) => sum + (node.computed.power && node.computed.power > 0 ? node.computed.power : 0), 0);
-    const pvGeneration = nodes
-      .filter((n) => n.type === "solar")
-      .reduce((sum, n) => sum + Math.max(0, n.computed.power ?? 0), 0);
+    const pvGeneration = nodes.filter((n) => n.type === "solar").reduce((sum, n) => sum + Math.max(0, n.computed.power ?? 0), 0);
 
-    const batteryPowerNet = nodes
-      .filter((n) => n.type === "battery")
-      .reduce((sum, n) => sum + (n.computed.power ?? 0), 0);
+    const batteryPowerNet = nodes.filter((n) => n.type === "battery").reduce((sum, n) => sum + (n.computed.power ?? 0), 0);
     const batteryCharge = Math.max(0, -batteryPowerNet);
     const batteryDischarge = Math.max(0, batteryPowerNet);
 
     const gridNodes = nodes.filter((n) => n.type === "grid");
     const gridImport = gridNodes.reduce((sum, n) => sum + Math.max(0, n.computed.power ?? 0), 0);
-    const gridExport = nodes
-      .filter((n) => n.parent && gridNodes.some((g) => g.id === n.parent))
-      .reduce((sum, n) => sum + Math.max(0, -(n.computed.power ?? 0)), 0);
+    const gridExport = nodes.filter((n) => n.parent && gridNodes.some((g) => g.id === n.parent)).reduce((sum, n) => sum + Math.max(0, -(n.computed.power ?? 0)), 0);
 
     const activeFlows = nodes.filter((node) => node.parent && getEdgeFlow(node, this.config.min_active_power).active).length;
     const alertCount = nodes.filter((node) => this.nodeStateClass(node) === "alert").length;
@@ -268,9 +249,19 @@ export class HousePowerFlowCard extends LitElement {
     const maxDev = Math.max(Math.abs(phaseTotals.L1 - avg), Math.abs(phaseTotals.L2 - avg), Math.abs(phaseTotals.L3 - avg));
     const phaseImbalancePct = avg > 0 ? (maxDev / avg) * 100 : 0;
 
+    const interPanelConnections = nodes
+      .filter((node) => node.parent)
+      .map((node) => ({ child: node, parent: node.parent ? nodeMap.get(node.parent) : undefined }))
+      .filter((entry): entry is { child: PowerNode; parent: PowerNode } => Boolean(entry.parent))
+      .filter(({ child, parent }) => Boolean(child.panel_id && parent.panel_id && child.panel_id !== parent.panel_id));
+
+    const panelOrder = new Map(this.config.panels.map((panel, idx) => [panel.id, idx]));
+    const panelCanvasWidth = 1200;
+    const panelCanvasHeight = Math.max(220, this.config.panels.length * 90);
+
     return html`
       <ha-card>
-        <div class="wrapper">
+        <div class="wrapper fullscreen">
           <div class="hero">
             <div>
               <div class="title">${this.config.title}</div>
@@ -299,9 +290,9 @@ export class HousePowerFlowCard extends LitElement {
             <span class="phase-chip l3">L3 ${phaseTotals.L3.toFixed(0)} W</span>
           </div>
 
-          <div class="graph" style=${`height:${layout.height}px`}>
+          <div class="graph" style=${`height:${graphHeight}px`}>
             <div class="graph-glow"></div>
-            <svg viewBox=${`0 0 ${layout.width} ${layout.height}`} preserveAspectRatio="none">
+            <svg viewBox=${`0 0 ${layout.width} ${graphHeight}`} preserveAspectRatio="none">
               <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--primary-text-color)" opacity="0.75" /></marker></defs>
               ${edges}
             </svg>
@@ -322,6 +313,40 @@ export class HousePowerFlowCard extends LitElement {
               `;
             })}
           </div>
+
+          ${interPanelConnections.length
+            ? html`
+                <div class="interpanel">
+                  <div class="interpanel-title">Inter-Panel Routing</div>
+                  <svg viewBox=${`0 0 ${panelCanvasWidth} ${panelCanvasHeight}`} preserveAspectRatio="none">
+                    ${interPanelConnections.map(({ child, parent }) => {
+                      const fromIndex = panelOrder.get(parent.panel_id ?? "") ?? 0;
+                      const toIndex = panelOrder.get(child.panel_id ?? "") ?? 0;
+                      const panelCount = Math.max(1, this.config!.panels.length);
+                      const laneW = panelCanvasWidth / panelCount;
+
+                      const x1 = fromIndex * laneW + laneW / 2;
+                      const x2 = toIndex * laneW + laneW / 2;
+                      const y1 = 36 + ((parent.panel_slot ?? 1) % 8) * 22;
+                      const y2 = 36 + ((child.panel_slot ?? 1) % 8) * 22;
+                      const midX = (x1 + x2) / 2;
+                      const d = `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y2} L ${x2} ${y2}`;
+                      const pid = `inter-${parent.id}-${child.id}`;
+                      const flow = getEdgeFlow(child, this.config!.min_active_power);
+
+                      return svg`
+                        <path id=${pid} class=${`inter-edge phase-${this.phaseClass(child.phase)}`} d=${d}></path>
+                        <text class="inter-label" x=${x1} y=${18}>${parent.panel_id}</text>
+                        <text class="inter-label" x=${x2} y=${18}>${child.panel_id}</text>
+                        ${flow.active
+                          ? svg`<circle class="flow-dot panel" r="3"><animateMotion dur=${`${flow.speedSeconds}s`} repeatCount="indefinite" rotate="auto"><mpath href=${`#${pid}`}></mpath></animateMotion></circle>`
+                          : svg``}
+                      `;
+                    })}
+                  </svg>
+                </div>
+              `
+            : html``}
 
           ${this.config.panels.length
             ? html`
@@ -357,15 +382,19 @@ export class HousePowerFlowCard extends LitElement {
                               const cCol = (childSlot - 1) % col;
                               const cRow = Math.floor((childSlot - 1) / col);
 
-                              const x1 = pCol * cellW + cellW / 2;
+                              // terminal anchors at slot borders
+                              const x1 = pCol * cellW + cellW * 0.86;
                               const y1 = pRow * cellH + cellH / 2;
-                              const x2 = cCol * cellW + cellW / 2;
+                              const x2 = cCol * cellW + cellW * 0.14;
                               const y2 = cRow * cellH + cellH / 2;
-                              const d = `M ${x1} ${y1} C ${(x1 + x2) / 2} ${y1}, ${(x1 + x2) / 2} ${y2}, ${x2} ${y2}`;
+                              const midX = (x1 + x2) / 2;
+                              const d = `M ${x1} ${y1} L ${midX} ${y1} L ${midX} ${y2} L ${x2} ${y2}`;
                               const pid = `panel-edge-${panel.id}-${node.id}`;
 
                               return svg`
                                 <path id=${pid} class=${`panel-edge ${flow.active ? "active" : ""} phase-${this.phaseClass(node.phase)}`} d=${d}></path>
+                                <circle cx=${x1} cy=${y1} r="2" class="terminal-dot"></circle>
+                                <circle cx=${x2} cy=${y2} r="2" class="terminal-dot"></circle>
                                 ${flow.active
                                   ? svg`
                                       <circle class="flow-dot panel" r="3"><animateMotion dur=${`${flow.speedSeconds}s`} repeatCount="indefinite" rotate="auto"><mpath href=${`#${pid}`}></mpath></animateMotion></circle>
@@ -378,13 +407,13 @@ export class HousePowerFlowCard extends LitElement {
                             })}
                           </svg>
 
-                          <div class="panel-grid" style=${`grid-template-columns: repeat(${columns}, minmax(120px, 1fr));`}>
+                          <div class="panel-grid" style=${`grid-template-columns: repeat(${columns}, minmax(140px, 1fr));`}>
                             ${Array.from({ length: slotCount }, (_, index) => {
                               const slot = index + 1;
                               const slotNode = slotNodeMap.get(slot);
 
                               if (!slotNode) {
-                                return html`<div class="panel-slot empty dropzone" @dragover=${this.onDragOver} @drop=${() => this.onDrop(panel.id, slot)}><div class="slot-label">Slot ${slot}</div><div class="slot-empty">пусто</div></div>`;
+                                return html`<div class="panel-slot empty dropzone" @dragover=${this.onDragOver} @drop=${() => this.onDrop(panel.id, slot)}><div class="slot-label">Slot ${slot}</div><div class="slot-empty">empty</div></div>`;
                               }
 
                               const metrics = this.formatMetrics(slotNode);

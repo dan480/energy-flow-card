@@ -3,15 +3,24 @@ import { css } from "lit";
 export const cardStyles = css`
   :host {
     display: block;
+    width: 100%;
+  }
+
+  ha-card {
+    width: 100%;
   }
 
   .wrapper {
     padding: 14px;
+    border-radius: 14px;
     background:
       radial-gradient(circle at 8% 0%, rgba(56, 189, 248, 0.18), transparent 35%),
       radial-gradient(circle at 90% 0%, rgba(16, 185, 129, 0.16), transparent 35%),
       linear-gradient(180deg, rgba(12, 16, 24, 0.04), rgba(12, 16, 24, 0.01));
-    border-radius: 14px;
+  }
+
+  .wrapper.fullscreen {
+    min-height: calc(100vh - 120px);
   }
 
   .hero {
@@ -24,9 +33,8 @@ export const cardStyles = css`
   }
 
   .title {
-    font-size: 21px;
+    font-size: 22px;
     font-weight: 800;
-    letter-spacing: 0.01em;
     margin-bottom: 4px;
   }
 
@@ -50,18 +58,14 @@ export const cardStyles = css`
     cursor: pointer;
   }
 
-  .edit-btn:hover {
-    background: rgba(14, 165, 233, 0.2);
-  }
-
   .kpis {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
     gap: 8px;
-    flex-wrap: wrap;
+    min-width: min(980px, 100%);
   }
 
   .kpi {
-    min-width: 108px;
     border-radius: 10px;
     padding: 8px 10px;
     background: rgba(255, 255, 255, 0.75);
@@ -102,22 +106,21 @@ export const cardStyles = css`
     border-radius: 999px;
     font-size: 11px;
     font-weight: 700;
-    border: 1px solid transparent;
   }
 
   .phase-chip.l1 {
     background: rgba(239, 68, 68, 0.12);
-    border-color: rgba(239, 68, 68, 0.35);
+    border: 1px solid rgba(239, 68, 68, 0.35);
   }
 
   .phase-chip.l2 {
     background: rgba(59, 130, 246, 0.12);
-    border-color: rgba(59, 130, 246, 0.35);
+    border: 1px solid rgba(59, 130, 246, 0.35);
   }
 
   .phase-chip.l3 {
     background: rgba(16, 185, 129, 0.12);
-    border-color: rgba(16, 185, 129, 0.35);
+    border: 1px solid rgba(16, 185, 129, 0.35);
   }
 
   .graph {
@@ -154,7 +157,6 @@ export const cardStyles = css`
   }
 
   .edge.active {
-    stroke: #22c55e;
     stroke-dasharray: 11 8;
     animation: flow 1s linear infinite;
     filter: drop-shadow(0 0 5px rgba(34, 197, 94, 0.65));
@@ -170,18 +172,21 @@ export const cardStyles = css`
   }
 
   .edge.phase-l1,
-  .panel-edge.phase-l1 {
-    stroke: rgba(239, 68, 68, 0.6);
+  .panel-edge.phase-l1,
+  .inter-edge.phase-l1 {
+    stroke: rgba(239, 68, 68, 0.75);
   }
 
   .edge.phase-l2,
-  .panel-edge.phase-l2 {
-    stroke: rgba(59, 130, 246, 0.6);
+  .panel-edge.phase-l2,
+  .inter-edge.phase-l2 {
+    stroke: rgba(59, 130, 246, 0.75);
   }
 
   .edge.phase-l3,
-  .panel-edge.phase-l3 {
-    stroke: rgba(16, 185, 129, 0.6);
+  .panel-edge.phase-l3,
+  .inter-edge.phase-l3 {
+    stroke: rgba(16, 185, 129, 0.75);
   }
 
   .flow-dot {
@@ -202,13 +207,12 @@ export const cardStyles = css`
   .node {
     position: absolute;
     transform: translate(-50%, -50%);
-    width: 186px;
+    width: 200px;
     min-height: 74px;
     padding: 9px 10px;
     border-radius: 12px;
-    backdrop-filter: blur(3px);
     border: 1px solid rgba(120, 130, 150, 0.4);
-    background: rgba(255, 255, 255, 0.87);
+    background: rgba(255, 255, 255, 0.9);
     box-shadow: 0 8px 16px rgba(15, 23, 42, 0.12);
     z-index: 2;
   }
@@ -263,34 +267,56 @@ export const cardStyles = css`
     box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
   }
 
-  .node.off,
-  .panel-slot.off {
-    opacity: 0.75;
+  .interpanel {
+    border: 1px solid rgba(120, 130, 150, 0.28);
+    border-radius: 12px;
+    background: rgba(248, 250, 252, 0.88);
+    margin-bottom: 12px;
+    padding: 8px;
   }
 
-  .node.alert,
-  .panel-slot.alert {
-    border-color: rgba(239, 68, 68, 0.6);
-    box-shadow: 0 8px 16px rgba(239, 68, 68, 0.24);
+  .interpanel-title {
+    font-size: 12px;
+    font-weight: 800;
+    margin-bottom: 6px;
+  }
+
+  .interpanel svg {
+    position: relative;
+    width: 100%;
+    height: 220px;
+  }
+
+  .inter-edge {
+    fill: none;
+    stroke-width: 2.4;
+    stroke-dasharray: 7 5;
+  }
+
+  .inter-label {
+    font-size: 11px;
+    fill: rgba(30, 41, 59, 0.85);
+    font-weight: 700;
+    text-anchor: middle;
   }
 
   .panels {
     display: grid;
     gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
   }
 
   .panel {
     border: 1px solid rgba(120, 130, 150, 0.28);
     border-radius: 14px;
     padding: 10px;
-    background: linear-gradient(160deg, rgba(255, 255, 255, 0.9), rgba(244, 248, 255, 0.86)), radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.08), transparent 45%);
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.9), rgba(244, 248, 255, 0.86));
     box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
   }
 
   .panel-top {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
     gap: 10px;
     margin-bottom: 8px;
   }
@@ -315,7 +341,6 @@ export const cardStyles = css`
 
   .usage-fill {
     height: 100%;
-    border-radius: inherit;
     background: linear-gradient(90deg, #22c55e, #0ea5e9);
   }
 
@@ -335,13 +360,17 @@ export const cardStyles = css`
   .panel-edge {
     fill: none;
     stroke-width: 2.2;
-    stroke: rgba(100, 116, 139, 0.5);
     stroke-dasharray: 6 5;
   }
 
   .panel-edge.active {
     stroke-width: 2.8;
     filter: drop-shadow(0 0 3px rgba(14, 165, 233, 0.7));
+  }
+
+  .terminal-dot {
+    fill: #334155;
+    opacity: 0.9;
   }
 
   .panel-grid {
@@ -356,16 +385,11 @@ export const cardStyles = css`
     border-radius: 9px;
     padding: 8px;
     min-height: 82px;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.92);
   }
 
   .panel-slot.draggable {
     cursor: grab;
-  }
-
-  .panel-slot.dropzone:hover {
-    border-color: rgba(14, 165, 233, 0.55);
-    background: rgba(14, 165, 233, 0.08);
   }
 
   .panel-slot.empty {
@@ -463,14 +487,21 @@ export const cardStyles = css`
     }
   }
 
+  @media (max-width: 1020px) {
+    .panels {
+      grid-template-columns: 1fr;
+    }
+  }
+
   @media (max-width: 740px) {
     .node {
       width: 156px;
       min-height: 68px;
     }
 
-    .kpi {
-      min-width: 92px;
+    .kpis {
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      min-width: 100%;
     }
   }
 `;

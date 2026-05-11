@@ -1,0 +1,31 @@
+{
+  "name": "house-power-flow-card",
+  "version": "0.1.0",
+  "description": "Configurable Home Assistant card for visualizing home electrical topology and live power flow.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-user/house-power-flow-card.git"
+  },
+  "keywords": [
+    "home-assistant",
+    "lovelace",
+    "custom-card",
+    "energy",
+    "power-flow"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "lit": "^3.2.1"
+  }
+}
